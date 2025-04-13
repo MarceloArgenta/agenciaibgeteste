@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Equipe de Trabalho IBGE</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDK (matching index.html) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Login - Equipe de Trabalho IBGE</h1>
+    </header>
+    <main>
+        <section id="login-form">
+            <h2>Entrar</h2>
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="email">E-mail:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Entrar</button>
+                </div>
+            </form>
+            <p id="error-message" style="color: red; display: none;"></p>
+        </section>
+    </main>
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTCr2JUHO2Yc1JuTcwkkd682At0lb00Zw",
+            authDomain: "agenciaibgeosorioteste.firebaseapp.com",
+            projectId: "agenciaibgeosorioteste",
+            storageBucket: "agenciaibgeosorioteste.firebasestorage.app",
+            messagingSenderId: "976519041511",
+            appId: "1:976519041511:web:32014eac776c4cab3ced42",
+            measurementId: "G-S6196T35Y2"
+        };
+    
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+    
+        // Login form submission
+        const authForm = document.getElementById('auth-form');
+        const errorMessage = document.getElementById('error-message');
+    
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+    
+            try {
+                sessionStorage.setItem('authLog', JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    page: 'login.html',
+                    user: null,
+                    action: 'Attempting login'
+                }));
+                await auth.signInWithEmailAndPassword(email, password);
+                const user = auth.currentUser;
+                sessionStorage.setItem('authLog', JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    page: 'login.html',
+                    user: user ? user.uid : null,
+                    action: 'Login successful, redirecting'
+                }));
+                const adminEmails = ['marcelo.argenta.pf@gmail.com', 'cintia.tusset@ibge.gov.br']; // Add second admin email here
+                let redirectUrl = sessionStorage.getItem('redirectUrl') || '/membro.html';
+                // Force non-admin users to membro.html
+                if (!adminEmails.includes(user.email)) {
+                    redirectUrl = '/membro.html';
+                }
+                sessionStorage.setItem('authLog', JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    page: 'login.html',
+                    user: user.uid,
+                    action: `Redirecting to ${redirectUrl}`
+                }));
+                sessionStorage.removeItem('redirectUrl');
+                window.location.href = redirectUrl;
+            } catch (error) {
+                console.error('Erro ao fazer login:', error);
+                sessionStorage.setItem('authLog', JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    page: 'login.html',
+                    user: null,
+                    action: 'Login failed: ' + error.message
+                }));
+                errorMessage.textContent = 'Erro: ' + error.message;
+                errorMessage.style.display = 'block';
+            }
+        });
+    
+        // Store the originating URL only if not already set
+        if (!sessionStorage.getItem('redirectUrl') && window.location.pathname !== '/login.html') {
+            sessionStorage.setItem('redirectUrl', window.location.pathname);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+/* Reset e Configurações Gerais */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #f0f4f8 0%, #e1e8f0 100%);
+    color: #2c3e50;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Cabeçalho */
+header {
+    background: #ffffff;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+header img {
+    max-width: 100px;
+}
+
+header h1 {
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: #34495e;
+    margin-top: 0.5rem;
+}
+
+/* Conteúdo Principal */
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+/* Abas */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #dfe6e9;
+    border-radius: 8px 8px 0 0;
+    background: #ecf0f1;
+    cursor: pointer;
+    font-weight: 500;
+    color: #7f8c8d;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover, .tab-btn.active {
+    background: #ffffff;
+    color: #34495e;
+    border-bottom: none;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Seções */
+section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+}
+
+section:hover {
+    transform: translateY(-2px);
+}
+
+h2 {
+    color: #34495e;
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 0.5rem;
+}
+
+/* Formulários */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #7f8c8d;
+}
+
+input[type="text"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #dfe6e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #fafafa;
+    transition: border-color 0.2s ease;
+}
+
+select[multiple] {
+    height: 120px; /* Altura fixa para exibir várias opções */
+}
+
+input[type="text"]:focus,
+select:focus,
+textarea:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.membro-inputs, .campo-inputs {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.membro-input, .campo-input, .valor-input {
+    flex: 1;
+}
+
+button {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #dfe6e9;
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+button:hover {
+    background: #ecf0f1;
+}
+
+/* Botões Específicos */
+.add-membro-btn, .add-campo-btn {
+    color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.add-membro-btn:hover, .add-campo-btn:hover {
+    color: #27ae60;
+    border-color: #27ae60;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+#salvar-equipe-btn, #salvar-membro-btn, #salvar-tarefa-btn {
+    color: #3498db;
+    border-color: #3498db;
+}
+
+#salvar-equipe-btn:hover, #salvar-membro-btn:hover, #salvar-tarefa-btn:hover {
+    color: #2980b9;
+    border-color: #2980b9;
+}
+
+#cancelar-equipe-btn, #cancelar-membro-btn, #cancelar-tarefa-btn {
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+#cancelar-equipe-btn:hover, #cancelar-membro-btn:hover, #cancelar-tarefa-btn:hover {
+    color: #c0392b;
+    border-color: #c0392b;
+}
+
+/* Listas */
+#equipes-container, #membros-container, #tarefas-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.equipe-card, .membro-card, .tarefa-card {
+    border: 2px solid #34495e;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: #ffffff;
+    transition: box-shadow 0.2s ease;
+}
+
+.equipe-card:hover, .membro-card:hover, .tarefa-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.equipe-nome, .membro-nome, .tarefa-nome {
+    font-size: 1.25rem;
+    color: #34495e;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.equipe-descricao, .membro-detalhes, .tarefa-detalhes {
+    margin-bottom: 1rem;
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+.equipe-membros, .membro-equipe, .tarefa-campos {
+    margin-bottom: 1rem;
+}
+
+.equipe-membro, .membro-atividade, .tarefa-campo {
+    display: inline-block;
+    background: #ecf0f1;
+    border-radius: 16px;
+    padding: 0.3rem 0.8rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #7f8c8d;
+}
+
+.equipe-acoes, .membro-acoes, .tarefa-acoes {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.editar-btn {
+    color: #f39c12;
+    border-color: #f39c12;
+}
+
+.editar-btn:hover {
+    color: #e67e22;
+    border-color: #e67e22;
+}
+
+.remover-btn {
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.remover-btn:hover {
+    color: #c0392b;
+    border-color: #c0392b;
+}
+
+/* Logout Button */
+#logout-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#logout-btn:hover {
+    background-color: #c82333;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    main {
+        padding: 0 1rem;
+    }
+
+    section {
+        padding: 1.5rem;
+    }
+
+    #equipes-container, #membros-container, #tarefas-container {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions, .equipe-acoes, .membro-acoes, .tarefa-acoes {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .tabs {
+        flex-direction: column;
+    }
+
+    .tab-btn {
+        border-radius: 8px;
+    }
+
+    .tab-btn.active {
+        border-bottom: 1px solid #dfe6e9;
+    }
+}
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    .membro-inputs, .campo-inputs {
+        flex-direction: column;
+    }
+
+    .membro-inputs button, .campo-inputs button {
+        width: 100%;
+    }
+}
+
+.tarefas-baloes, .membro-tarefas, .equipe-membros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.tarefa-balao, .membro-tarefa, .equipe-membro {
+    display: inline-block;
+    background: #ecf0f1 !important;
+    border-radius: 16px !important;
+    padding: 0.3rem 0.8rem !important;
+    font-size: 0.875rem !important;
+    color: #7f8c8d !important;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+}
+
+.tarefa-balao.selecionado {
+    background: #1a3c34 !important;
+    color: #ffffff !important;
+}
+.codigo-setor-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#prefixo-codigo-setor {
+    background: #dfe6e9;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #7f8c8d;
+}
+
+#sufixo-codigo-setor {
+    flex: 1;
+}
+
+input:invalid {
+    border-color: #e74c3c;
+}
+
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #34495e;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #34495e;
+    background: #ffffff;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus {
+    border-color: #1a3c34;
+    outline: none;
+}

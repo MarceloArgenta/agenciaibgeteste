@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Equipes - IBGE</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <button id="logout-btn">Sair</button>
+    </div>
+    <header>
+        <img src="logo.jpg" alt="Logo do IBGE">
+        <h1>Gerenciador de Equipes</h1>
+    </header>
+
+    <main>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="equipes">Equipes</button>
+            <button class="tab-btn" data-tab="membros">Membros</button>
+            <button class="tab-btn" data-tab="tarefas">Tarefas</button>
+            <button class="tab-btn" data-tab="municipios">Municípios</button>
+            <button class="tab-btn" data-tab="setores">Setores</button>
+        </div>
+
+        <!-- Container de Equipes -->
+        <div id="equipes" class="tab-content active">
+            <section id="lista-equipes">
+                <h2>Equipes Cadastradas</h2>
+                <div id="equipes-container"></div>
+            </section>
+            <section id="formulario-equipe">
+                <h2>Adicionar/Editar Equipe</h2>
+                <form id="equipe-form">
+                    <input type="hidden" id="equipe-id">
+                    <div class="form-group">
+                        <label for="nome-equipe">Nome da Equipe:</label>
+                        <input type="text" id="nome-equipe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao-equipe">Descrição:</label>
+                        <textarea id="descricao-equipe" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" id="salvar-equipe-btn">Salvar</button>
+                        <button type="button" id="cancelar-equipe-btn">Cancelar</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+      <!-- Container de Membros -->
+<div id="membros" class="tab-content">
+    <section id="lista-membros">
+        <h2>Membros Cadastrados</h2>
+        <div id="membros-container"></div>
+    </section>
+    <section id="formulario-membro">
+        <h2>Adicionar/Editar Membro</h2>
+        <form id="membro-form">
+            <input type="hidden" id="membro-id">
+            <div class="form-group">
+                <label for="email-membro">E-mail:</label>
+                <input type="email" id="email-membro" required>
+            </div>
+            <div class="form-group">
+                <label for="senha-membro">Senha (mínimo 6 caracteres):</label>
+                <input type="password" id="senha-membro" minlength="6" required>
+            </div>
+            <div class="form-group">
+                <label for="nome-membro">Nome:</label>
+                <input type="text" id="nome-membro" required>
+            </div>
+            <div class="form-group">
+                <label for="matricula-membro">Matrícula:</label>
+                <input type="text" id="matricula-membro" required>
+            </div>
+            <div class="form-group">
+                <label for="equipe-membro">Equipe:</label>
+                <select id="equipe-membro" required>
+                    <option value="">Selecione uma equipe</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tarefas-membro">Tarefas:</label>
+                <input type="hidden" id="tarefas-membro" name="tarefas-membro">
+                <div id="tarefas-membro-baloes" class="tarefas-baloes"></div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" id="salvar-membro-btn">Salvar</button>
+                <button type="button" id="cancelar-membro-btn">Cancelar</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+        <!-- Container de Tarefas -->
+        <div id="tarefas" class="tab-content">
+            <section id="lista-tarefas">
+                <h2>Tarefas Cadastradas</h2>
+                <div id="tarefas-container"></div>
+            </section>
+            <section id="formulario-tarefa">
+                <h2>Adicionar/Editar Tarefa</h2>
+                <form id="tarefa-form">
+                    <input type="hidden" id="tarefa-id">
+                    <div class="form-group">
+                        <label for="nome-tarefa">Nome da Tarefa:</label>
+                        <input type="text" id="nome-tarefa" required>
+                    </div>
+                    <div class="form-group" id="campos-tarefa-container">
+                        <label>Campos Adicionais:</label>
+                        <div class="campo-inputs">
+                            <input type="text" class="campo-input" placeholder="Nome do campo">
+                            <input type="text" class="valor-input" placeholder="Valor do campo">
+                            <button type="button" class="add-campo-btn">+</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" id="salvar-tarefa-btn">Salvar</button>
+                        <button type="button" id="cancelar-tarefa-btn">Cancelar</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <!-- Container de Municípios -->
+<div id="municipios" class="tab-content">
+    <section id="lista-municipios">
+        <h2>Municípios Cadastrados</h2>
+        <div id="municipios-container"></div>
+    </section>
+    <section id="formulario-municipio">
+        <h2>Adicionar/Editar Município</h2>
+        <form id="municipio-form">
+            <input type="hidden" id="municipio-id">
+            <div class="form-group">
+                <label for="nome-municipio">Nome do Município:</label>
+                <input type="text" id="nome-municipio" required>
+            </div>
+            <div class="form-group">
+                <label for="codigo-ibge">Código IBGE (7 dígitos):</label>
+                <input type="text" id="codigo-ibge" maxlength="7" pattern="\d{7}" required title="Deve conter exatamente 7 dígitos">
+            </div>
+            <div class="form-actions">
+                <button type="submit" id="salvar-municipio-btn">Salvar</button>
+                <button type="button" id="cancelar-municipio-btn">Cancelar</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<!-- Container de Setores -->
+<div id="setores" class="tab-content">
+    <section id="lista-setores">
+        <h2>Setores Cadastrados</h2>
+        <div id="setores-container"></div>
+    </section>
+    <section id="formulario-setor">
+        <h2>Adicionar/Editar Setor</h2>
+        <form id="setor-form">
+            <input type="hidden" id="setor-id">
+            <div class="form-group">
+                <label for="municipio-setor">Município:</label>
+                <select id="municipio-setor" required>
+                    <option value="">Selecione um município</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="codigo-setor">Código do Setor (15 dígitos):</label>
+                <div class="codigo-setor-container">
+                    <span id="prefixo-codigo-setor"></span>
+                    <input type="text" id="sufixo-codigo-setor" maxlength="8" pattern="\d{8}" required title="Deve conter exatamente 8 dígitos">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" id="salvar-setor-btn">Salvar</button>
+                <button type="button" id="cancelar-setor-btn">Cancelar</button>
+            </div>
+        </form>
+    </section>
+    </div>
+
+
+
+    </main>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Script da aplicação -->
+    <script src="app.js"></script>
+</body>
+</html>

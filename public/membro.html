@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página do Membro - Equipe de Trabalho IBGE</title>
+    <link rel="stylesheet" href="membro.css">
+    <!-- Firebase SDK (compat, matching index.html) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Minha Área - Equipe de Trabalho IBGE</h1>
+        <button id="logout-btn">Sair</button>
+    </header>
+    <main>
+        <section id="membro-info">
+            <h2>Informações do Membro</h2>
+            <div id="membro-container"></div>
+        </section>
+    </main>
+    <script src="membro.js"></script>
+</body>
+</html>
