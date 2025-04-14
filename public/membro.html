@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página do Membro - Equipe de Trabalho IBGE</title>
     <link rel="stylesheet" href="membro.css">
-    <!-- Firebase SDK (compat, matching index.html) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -16,9 +16,32 @@
         <button id="logout-btn">Sair</button>
     </header>
     <main>
-        <section id="membro-info">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="inicial">Inicial</button>
+            <button class="tab-btn" data-tab="pesquisa">Pesquisa</button>
+        </div>
+        <section id="inicial" class="tab-content active">
             <h2>Informações do Membro</h2>
             <div id="membro-container"></div>
+        </section>
+        <section id="pesquisa" class="tab-content">
+            <h2>Pesquisas Cadastradas</h2>
+            <div id="pesquisa-baloes" class="pesquisa-view active">
+                <div id="pesquisa-baloes-container"></div>
+            </div>
+            <div id="pesquisa-detalhes" class="pesquisa-view">
+                <button id="voltar-btn" class="voltar-btn">← Voltar</button>
+                <div id="pesquisa-detalhes-container"></div>
+            </div>
+            <div id="iniciar-tarefa" class="pesquisa-view">
+                <button id="voltar-detalhes-btn" class="voltar-btn">← Voltar</button>
+                <div id="iniciar-tarefa-container"></div>
+                <div id="iniciadas-lista"></div>
+            </div>
+            <div id="preencher-campos" class="pesquisa-view">
+                <button id="voltar-iniciar-btn" class="voltar-btn">← Voltar</button>
+                <div id="preencher-campos-container"></div>
+            </div>
         </section>
     </main>
     <script src="membro.js"></script>
