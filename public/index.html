@@ -18,15 +18,29 @@
 
     <main>
         <div class="tabs">
-            <button class="tab-btn active" data-tab="equipes">Equipes</button>
+            <button class="tab-btn active" data-tab="acompanhamento">Acompanhamento</button>
+            <button class="tab-btn" data-tab="equipes">Equipes</button>
             <button class="tab-btn" data-tab="membros">Membros</button>
             <button class="tab-btn" data-tab="tarefas">Tarefas</button>
             <button class="tab-btn" data-tab="municipios">Municípios</button>
             <button class="tab-btn" data-tab="setores">Setores</button>
         </div>
 
+        <div id="acompanhamento" class="tab-content active">
+            <section id="acompanhamento-section">
+                <h2>Acompanhamento de Tarefas Iniciadas</h2>
+                <div id="acompanhamento-lista" class="acompanhamento-view active">
+                    <div id="acompanhamento-lista-container"></div>
+                </div>
+                <div id="visualizar-campos" class="acompanhamento-view">
+                    <button id="voltar-lista-btn" class="voltar-btn">← Voltar</button>
+                    <div id="visualizar-campos-container"></div>
+                </div>
+            </section>
+        </div>
+
         <!-- Container de Equipes -->
-        <div id="equipes" class="tab-content active">
+        <div id="equipes" class="tab-content">
             <section id="lista-equipes">
                 <h2>Equipes Cadastradas</h2>
                 <div id="equipes-container"></div>

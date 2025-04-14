@@ -389,3 +389,113 @@ input:invalid {
     border-color: #1a3c34;
     outline: none;
 }
+
+/* Estilos para Acompanhamento */
+.acompanhamento-view {
+    display: none;
+}
+
+.acompanhamento-view.active {
+    display: block;
+}
+
+.tarefas-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.tarefa-card {
+    border: 2px solid #34495e;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: #ffffff;
+    transition: box-shadow 0.2s ease;
+}
+
+.tarefa-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.tarefa-nome {
+    font-size: 1.25rem;
+    color: #34495e;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.tarefa-detalhes {
+    margin-bottom: 0.5rem;
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+.visualizar-btn {
+    color: #3498db;
+    border: 1px solid #3498db;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.visualizar-btn:hover {
+    color: #2980b9;
+    border-color: #2980b9;
+    background: #ecf0f1;
+}
+
+.visualizar-card {
+    border: 2px solid #34495e;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: #ffffff;
+    margin-top: 1rem;
+}
+
+.visualizar-titulo {
+    font-size: 1.5rem;
+    color: #34495e;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+.campos-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.campo-view {
+    display: flex;
+    flex-direction: column;
+}
+
+.campo-label {
+    font-size: 0.95rem;
+    color: #34495e;
+    font-weight: 500;
+}
+
+.campo-valor {
+    font-size: 0.95rem;
+    color: #7f8c8d;
+}
+
+.voltar-btn {
+    color: #34495e;
+    border: 1px solid #34495e;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: 1rem;
+}
+
+.voltar-btn:hover {
+    color: #2c3e50;
+    border-color: #2c3e50;
+    background: #ecf0f1;
+}

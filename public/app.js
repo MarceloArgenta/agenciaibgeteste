@@ -59,7 +59,11 @@ const cancelarTarefaBtn = document.getElementById('cancelar-tarefa-btn');
 const tarefasContainer = document.getElementById('tarefas-container');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
-
+const acompanhamentoListaContainer = document.getElementById('acompanhamento-lista-container');
+const visualizarCamposContainer = document.getElementById('visualizar-campos-container');
+const voltarListaBtn = document.getElementById('voltar-lista-btn');
+const acompanhamentoListaView = document.getElementById('acompanhamento-lista');
+const visualizarCamposView = document.getElementById('visualizar-campos');
 // Verificar autenticação
 
 
@@ -87,6 +91,30 @@ function checkAutoLogout() {
 }
 setInterval(checkAutoLogout, 60000);
 
+// Ordem dos campos (para visualização)
+const ordemCampos = [
+    "Data de Início da Coleta",
+    "Data de finalização da coleta",
+    "Domicílio com morador ausente",
+    "Domicílio com recusa",
+    "Domicílio concluído",
+    "Domicílios",
+    "Domicílios em Andamento",
+    "Domicílios em Andamento POF pendentes",
+    "Domicílios em Andamento POF realizados",
+    "Fim do PT",
+    "Início do PT",
+    "Município",
+    "Período teórico",
+    "Responsável 1",
+    "Responsável 2",
+    "Setor",
+    "Trimestre",
+    "Veículo",
+    "fechado/vago/uso ocasional/demolido"
+];
+
+
 // Funções de gerenciamento de abas
 tabButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -94,6 +122,23 @@ tabButtons.forEach(button => {
         tabContents.forEach(content => content.classList.remove('active'));
         button.classList.add('active');
         document.getElementById(button.dataset.tab).classList.add('active');
+        if (button.dataset.tab === 'acompanhamento') {
+            renderizarAcompanhamento();
+        } else if (button.dataset.tab === 'equipes') {
+            atualizarListaEquipes();
+        } else if (button.dataset.tab === 'membros') {
+            atualizarListaMembros();
+            atualizarEquipesSelect();
+            inicializarTarefasMembro();
+        } else if (button.dataset.tab === 'tarefas') {
+            atualizarListaTarefas();
+        } else if (button.dataset.tab === 'municipios') {
+            atualizarListaMunicipios();
+            atualizarMunicipiosSelect();
+        } else if (button.dataset.tab === 'setores') {
+            atualizarListaSetores();
+            atualizarMunicipiosSelect();
+        }
     });
 });
 
@@ -849,6 +894,110 @@ async function atualizarListaSetores() {
     }
 }
 
+// Função para renderizar tarefas iniciadas (Aba Acompanhamento)
+async function renderizarAcompanhamento() {
+    acompanhamentoListaContainer.innerHTML = '';
+    try {
+        const logsSnapshot = await db.collection('tarefa_logs')
+            .where('acao', '==', 'iniciar')
+            .orderBy('dataInicio', 'desc')
+            .get();
+        if (logsSnapshot.empty) {
+            acompanhamentoListaContainer.innerHTML = '<p>Nenhuma tarefa iniciada.</p>';
+            return;
+        }
+
+        // Carregar membros para mapear emails a nomes
+        const membrosSnapshot = await db.collection('membros').get();
+        const membrosMap = {};
+        membrosSnapshot.forEach(doc => {
+            const membro = doc.data();
+            membrosMap[membro.uid] = membro.nome;
+        });
+
+        const tarefasContainer = document.createElement('div');
+        tarefasContainer.className = 'tarefas-container';
+        for (const doc of logsSnapshot.docs) {
+            const log = { id: doc.id, ...doc.data() };
+            const tarefaDoc = await db.collection('tarefas').doc(log.tarefaId).get();
+            if (!tarefaDoc.exists) {
+                console.warn('Tarefa não encontrada para log:', log.id);
+                continue;
+            }
+            const tarefa = { id: tarefaDoc.id, ...tarefaDoc.data() };
+            const tarefaCard = document.createElement('div');
+            tarefaCard.className = 'tarefa-card';
+            
+            const membroNome = membrosMap[log.membroId] || log.membroEmail || 'Desconhecido';
+            tarefaCard.innerHTML = `
+                <h3 class="tarefa-nome">${log.tarefaNome}</h3>
+                <p class="tarefa-detalhes">Membro: ${membroNome}</p>
+                <p class="tarefa-detalhes">Data de Início: ${log.dataInicio ? new Date(log.dataInicio).toLocaleDateString('pt-BR') : 'N/A'}</p>
+                <p class="tarefa-detalhes">Status: ${log.status || 'Iniciado'}</p>
+            `;
+            
+            const visualizarBtn = document.createElement('button');
+            visualizarBtn.className = 'visualizar-btn';
+            visualizarBtn.textContent = 'Visualizar Campos';
+            visualizarBtn.addEventListener('click', () => {
+                renderizarVisualizarCampos(log, tarefa);
+                acompanhamentoListaView.classList.remove('active');
+                visualizarCamposView.classList.add('active');
+            });
+            
+            tarefaCard.appendChild(visualizarBtn);
+            tarefasContainer.appendChild(tarefaCard);
+        }
+        acompanhamentoListaContainer.appendChild(tarefasContainer);
+    } catch (error) {
+        console.error('Erro ao carregar tarefas iniciadas:', error);
+        acompanhamentoListaContainer.innerHTML = '<p>Erro ao carregar tarefas iniciadas.</p>';
+    }
+}
+
+// Função para renderizar visualização de campos (read-only)
+function renderizarVisualizarCampos(log, tarefa) {
+    visualizarCamposContainer.innerHTML = '';
+    const visualizarCard = document.createElement('div');
+    visualizarCard.className = 'visualizar-card';
+    
+    const visualizarTitulo = document.createElement('h3');
+    visualizarTitulo.className = 'visualizar-titulo';
+    visualizarTitulo.textContent = `Campos: ${log.tarefaNome}`;
+    
+    const camposContainer = document.createElement('div');
+    camposContainer.className = 'campos-container';
+    
+    const logCampos = log.campos || {};
+    console.log('Visualizando campos para log:', log.id, 'tarefa:', tarefa.id, 'campos:', logCampos);
+    
+    if (!tarefa || !tarefa.campos || Object.keys(tarefa.campos).length === 0) {
+        console.warn('Nenhum campo válido para tarefa:', tarefa?.id);
+        camposContainer.innerHTML = '<p>Nenhum campo preenchido.</p>';
+    } else {
+        ordemCampos.forEach(nomeCampo => {
+            if (tarefa.campos.hasOwnProperty(nomeCampo)) {
+                const campoDiv = document.createElement('div');
+                campoDiv.className = 'campo-view';
+                const valor = logCampos[nomeCampo] || 'Não preenchido';
+                campoDiv.innerHTML = `<span class="campo-label">${nomeCampo}:</span> <span class="campo-valor">${valor}</span>`;
+                camposContainer.appendChild(campoDiv);
+            }
+        });
+    }
+    
+    visualizarCard.appendChild(visualizarTitulo);
+    visualizarCard.appendChild(camposContainer);
+    visualizarCamposContainer.appendChild(visualizarCard);
+}
+
+// Evento para voltar à lista de acompanhamento
+voltarListaBtn.addEventListener('click', () => {
+    visualizarCamposView.classList.remove('active');
+    acompanhamentoListaView.classList.add('active');
+    renderizarAcompanhamento();
+});
+
 // Estilos adicionais para os cards (injetados via JS para evitar alterar CSS manualmente)
 const estilosCards = `
     .municipio-card, .setor-card {
@@ -1087,6 +1236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 atualizarEquipesSelect();
                 inicializarTarefasMembro();
                 atualizarMunicipiosSelect();
+                renderizarAcompanhamento();
                 unsubscribe(); // Stop listening after success
             } else {
                 console.log('Usuário não-admin tentou acessar index.html, redirecionando para membro.html');
