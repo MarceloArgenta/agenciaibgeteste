@@ -32,28 +32,7 @@ const logoutBtn = document.getElementById('logout-btn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 
-// Ordem dos campos
-const ordemCampos = [
-    "Data de Início da Coleta",
-    "Data de finalização da coleta",
-    "Domicílio com morador ausente",
-    "Domicílio com recusa",
-    "Domicílio concluído",
-    "Domicílios",
-    "Domicílios em Andamento",
-    "Domicílios em Andamento POF pendentes",
-    "Domicílios em Andamento POF realizados",
-    "Fim do PT",
-    "Início do PT",
-    "Município",
-    "Período teórico",
-    "Responsável 1",
-    "Responsável 2",
-    "Setor",
-    "Trimestre",
-    "Veículo",
-    "fechado/vago/uso ocasional/demolido"
-];
+
 
 // Função para gerenciar abas
 tabButtons.forEach(button => {
@@ -372,7 +351,16 @@ async function renderizarPreencherCampos(log, tarefa) {
         let municipioSelect = null;
         let setorSelect = null;
         
-        ordemCampos.forEach(nomeCampo => {
+        // Ordenar campos por ordem e nome
+        const camposOrdenados = Object.entries(tarefa.campos)
+            .sort((a, b) => {
+                const ordemA = a[1].ordem !== undefined ? a[1].ordem : 999;
+                const ordemB = b[1].ordem !== undefined ? b[1].ordem : 999;
+                if (ordemA === ordemB) return a[0].localeCompare(b[0]);
+                return ordemA - ordemB;
+            });
+        
+        camposOrdenados.forEach(([nomeCampo, campoData]) => {
             if (tarefa.campos.hasOwnProperty(nomeCampo)) {
                 console.log('Renderizando campo:', nomeCampo);
                 const campoContainer = document.createElement('div');

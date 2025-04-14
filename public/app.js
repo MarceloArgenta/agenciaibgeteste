@@ -91,28 +91,7 @@ function checkAutoLogout() {
 }
 setInterval(checkAutoLogout, 60000);
 
-// Ordem dos campos (para visualização)
-const ordemCampos = [
-    "Data de Início da Coleta",
-    "Data de finalização da coleta",
-    "Domicílio com morador ausente",
-    "Domicílio com recusa",
-    "Domicílio concluído",
-    "Domicílios",
-    "Domicílios em Andamento",
-    "Domicílios em Andamento POF pendentes",
-    "Domicílios em Andamento POF realizados",
-    "Fim do PT",
-    "Início do PT",
-    "Município",
-    "Período teórico",
-    "Responsável 1",
-    "Responsável 2",
-    "Setor",
-    "Trimestre",
-    "Veículo",
-    "fechado/vago/uso ocasional/demolido"
-];
+
 
 
 // Funções de gerenciamento de abas
@@ -518,6 +497,11 @@ function adicionarCampoTarefa() {
     campoInput.type = 'text';
     campoInput.className = 'campo-input';
     campoInput.placeholder = 'Nome do campo';
+    const ordemInput = document.createElement('input');
+    ordemInput.type = 'number';
+    ordemInput.className = 'ordem-input';
+    ordemInput.placeholder = 'Ordem';
+    ordemInput.min = '1';
     const valorInput = document.createElement('input');
     valorInput.type = 'text';
     valorInput.className = 'valor-input';
@@ -533,6 +517,7 @@ function adicionarCampoTarefa() {
     removeBtn.textContent = '-';
     removeBtn.addEventListener('click', () => campoDiv.remove());
     campoDiv.appendChild(campoInput);
+    campoDiv.appendChild(ordemInput);
     campoDiv.appendChild(valorInput);
     campoDiv.appendChild(addBtn);
     campoDiv.appendChild(removeBtn);
@@ -556,8 +541,10 @@ function limparFormularioTarefa() {
     const camposInputs = camposTarefaContainer.querySelectorAll('.campo-inputs');
     for (let i = 1; i < camposInputs.length; i++) camposInputs[i].remove();
     const primeiroCampoInput = camposTarefaContainer.querySelector('.campo-input');
+    const primeiroOrdemInput = camposTarefaContainer.querySelector('.ordem-input');
     const primeiroValorInput = camposTarefaContainer.querySelector('.valor-input');
     if (primeiroCampoInput) primeiroCampoInput.value = '';
+    if (primeiroOrdemInput) primeiroOrdemInput.value = '';
     if (primeiroValorInput) primeiroValorInput.value = '';
     salvarTarefaBtn.textContent = 'Salvar';
 }
@@ -568,18 +555,24 @@ function preencherFormularioTarefa(tarefa) {
     const camposInputs = camposTarefaContainer.querySelectorAll('.campo-inputs');
     camposInputs.forEach(input => input.remove());
     if (tarefa.campos && Object.keys(tarefa.campos).length > 0) {
-        Object.entries(tarefa.campos).forEach(([nomeCampo, valorCampo], index) => {
+        Object.entries(tarefa.campos).forEach(([nomeCampo, campoData], index) => {
             const campoDiv = document.createElement('div');
             campoDiv.className = 'campo-inputs';
             const campoInput = document.createElement('input');
             campoInput.type = 'text';
             campoInput.className = 'campo-input';
             campoInput.value = nomeCampo;
+            const ordemInput = document.createElement('input');
+            ordemInput.type = 'number';
+            ordemInput.className = 'ordem-input';
+            ordemInput.value = campoData.ordem !== undefined ? campoData.ordem : '';
+            ordemInput.min = '1';
             const valorInput = document.createElement('input');
             valorInput.type = 'text';
             valorInput.className = 'valor-input';
-            valorInput.value = valorCampo;
+            valorInput.value = campoData.valor || '';
             campoDiv.appendChild(campoInput);
+            campoDiv.appendChild(ordemInput);
             campoDiv.appendChild(valorInput);
             if (index === Object.keys(tarefa.campos).length - 1) {
                 const addBtn = document.createElement('button');
@@ -956,6 +949,7 @@ async function renderizarAcompanhamento() {
 }
 
 // Função para renderizar visualização de campos (read-only)
+
 function renderizarVisualizarCampos(log, tarefa) {
     visualizarCamposContainer.innerHTML = '';
     const visualizarCard = document.createElement('div');
@@ -975,14 +969,19 @@ function renderizarVisualizarCampos(log, tarefa) {
         console.warn('Nenhum campo válido para tarefa:', tarefa?.id);
         camposContainer.innerHTML = '<p>Nenhum campo preenchido.</p>';
     } else {
-        ordemCampos.forEach(nomeCampo => {
-            if (tarefa.campos.hasOwnProperty(nomeCampo)) {
-                const campoDiv = document.createElement('div');
-                campoDiv.className = 'campo-view';
-                const valor = logCampos[nomeCampo] || 'Não preenchido';
-                campoDiv.innerHTML = `<span class="campo-label">${nomeCampo}:</span> <span class="campo-valor">${valor}</span>`;
-                camposContainer.appendChild(campoDiv);
-            }
+        const camposOrdenados = Object.entries(tarefa.campos)
+            .sort((a, b) => {
+                const ordemA = a[1].ordem !== undefined ? a[1].ordem : 999;
+                const ordemB = b[1].ordem !== undefined ? b[1].ordem : 999;
+                if (ordemA === ordemB) return a[0].localeCompare(b[0]);
+                return ordemA - ordemB;
+            });
+        camposOrdenados.forEach(([nomeCampo]) => {
+            const campoDiv = document.createElement('div');
+            campoDiv.className = 'campo-view';
+            const valor = logCampos[nomeCampo] || 'Não preenchido';
+            campoDiv.innerHTML = `<span class="campo-label">${nomeCampo}:</span> <span class="campo-valor">${valor}</span>`;
+            camposContainer.appendChild(campoDiv);
         });
     }
     
@@ -990,7 +989,6 @@ function renderizarVisualizarCampos(log, tarefa) {
     visualizarCard.appendChild(camposContainer);
     visualizarCamposContainer.appendChild(visualizarCard);
 }
-
 // Evento para voltar à lista de acompanhamento
 voltarListaBtn.addEventListener('click', () => {
     visualizarCamposView.classList.remove('active');
@@ -1108,8 +1106,14 @@ tarefaForm.addEventListener('submit', async (e) => {
     const campos = {};
     camposInputs.forEach(campoDiv => {
         const nomeCampo = campoDiv.querySelector('.campo-input').value.trim();
-        const valorCampo = campoDiv.querySelector('.campo-input').value.trim();
-        if (nomeCampo && valorCampo) campos[nomeCampo] = valorCampo;
+        const valorCampo = campoDiv.querySelector('.valor-input').value.trim();
+        const ordemCampo = campoDiv.querySelector('.ordem-input').value.trim();
+        if (nomeCampo) {
+            campos[nomeCampo] = {
+                valor: valorCampo,
+                ordem: ordemCampo ? parseInt(ordemCampo) : 999
+            };
+        }
     });
     try {
         const id = tarefaIdInput.value;
