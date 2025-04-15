@@ -376,7 +376,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                 if (['Responsável 1', 'Responsável 2', 'Município', 'Setor'].includes(nomeCampo)) {
                     campoInput = document.createElement('select');
                     campoInput.className = 'campo-select';
-                    campoInput.disabled = true; // Sempre desabilitado
+                    campoInput.disabled = isFinalizada;
                     if (nomeCampo === 'Município') {
                         municipioSelect = campoInput;
                     } else if (nomeCampo === 'Setor') {
@@ -406,7 +406,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                     campoInput.type = nomeCampo.includes('Data de Início da Coleta') || nomeCampo.includes('Data de finalização da coleta') ? 'date' : 'text';
                     campoInput.className = 'campo-input';
                     campoInput.value = logCampos[nomeCampo] || '';
-                    campoInput.disabled = true; // Sempre desabilitado
+                    campoInput.disabled = isFinalizada;
                 }
                 
                 campoContainer.appendChild(campoLabel);
@@ -442,6 +442,9 @@ async function renderizarPreencherCampos(log, tarefa) {
             };
             
             await updateSetorOptions();
+            if (!isFinalizada) {
+                municipioSelect.addEventListener('change', updateSetorOptions);
+            }
         }
         
         if (!isFinalizada) {
@@ -472,7 +475,6 @@ async function renderizarPreencherCampos(log, tarefa) {
                 });
                 const novoStatus = finalizarCheckbox.checked ? 'Finalizada' : 'Iniciado';
                 try {
-                    // Comparar campos antigos e novos
                     const camposAntigos = logCampos || {};
                     const changedFields = {};
                     Object.entries(novosCampos).forEach(([key, value]) => {
@@ -489,7 +491,6 @@ async function renderizarPreencherCampos(log, tarefa) {
                             status: novoStatus
                         });
                     }
-                    // Atualizar tarefa_logs
                     await db.collection('tarefa_logs').doc(log.id).update({
                         campos: novosCampos,
                         status: novoStatus
@@ -523,7 +524,9 @@ async function renderizarPreencherCampos(log, tarefa) {
                     });
                     console.log('Tarefa revertida para Iniciado:', log.id);
                     alert('Tarefa desmarcada como finalizada com sucesso!');
-                    renderizarPreencherCampos(log, tarefa);
+                    // Update log locally for immediate re-render
+                    const updatedLog = { ...log, status: 'Iniciado' };
+                    renderizarPreencherCampos(updatedLog, tarefa);
                     renderizarIniciadas(auth.currentUser.uid);
                 } catch (error) {
                     console.error('Erro ao desmarcar finalização:', error);
