@@ -376,7 +376,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                 if (['Responsável 1', 'Responsável 2', 'Município', 'Setor'].includes(nomeCampo)) {
                     campoInput = document.createElement('select');
                     campoInput.className = 'campo-select';
-                    campoInput.disabled = isFinalizada;
+                    campoInput.disabled = true; // Sempre desabilitado
                     if (nomeCampo === 'Município') {
                         municipioSelect = campoInput;
                     } else if (nomeCampo === 'Setor') {
@@ -406,7 +406,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                     campoInput.type = nomeCampo.includes('Data de Início da Coleta') || nomeCampo.includes('Data de finalização da coleta') ? 'date' : 'text';
                     campoInput.className = 'campo-input';
                     campoInput.value = logCampos[nomeCampo] || '';
-                    campoInput.disabled = isFinalizada;
+                    campoInput.disabled = true; // Sempre desabilitado
                 }
                 
                 campoContainer.appendChild(campoLabel);
@@ -442,9 +442,6 @@ async function renderizarPreencherCampos(log, tarefa) {
             };
             
             await updateSetorOptions();
-            if (!isFinalizada) {
-                municipioSelect.addEventListener('change', updateSetorOptions);
-            }
         }
         
         if (!isFinalizada) {
@@ -461,7 +458,7 @@ async function renderizarPreencherCampos(log, tarefa) {
             finalizarContainer.appendChild(finalizarCheckbox);
             finalizarContainer.appendChild(finalizarLabel);
             camposForm.appendChild(finalizarContainer);
-        
+
             const salvarBtn = document.createElement('button');
             salvarBtn.type = 'button';
             salvarBtn.className = 'salvar-campos-btn';
@@ -507,6 +504,33 @@ async function renderizarPreencherCampos(log, tarefa) {
                 }
             });
             camposForm.appendChild(salvarBtn);
+        } else {
+            const desmarcarBtn = document.createElement('button');
+            desmarcarBtn.type = 'button';
+            desmarcarBtn.className = 'desmarcar-btn';
+            desmarcarBtn.textContent = 'Desmarcar Finalização';
+            desmarcarBtn.addEventListener('click', async () => {
+                try {
+                    await db.collection('tarefa_log_modifications').add({
+                        logId: log.id,
+                        tarefaId: log.tarefaId,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        changedFields: {},
+                        status: 'Iniciado'
+                    });
+                    await db.collection('tarefa_logs').doc(log.id).update({
+                        status: 'Iniciado'
+                    });
+                    console.log('Tarefa revertida para Iniciado:', log.id);
+                    alert('Tarefa desmarcada como finalizada com sucesso!');
+                    renderizarPreencherCampos(log, tarefa);
+                    renderizarIniciadas(auth.currentUser.uid);
+                } catch (error) {
+                    console.error('Erro ao desmarcar finalização:', error);
+                    alert('Erro ao desmarcar finalização.');
+                }
+            });
+            camposForm.appendChild(desmarcarBtn);
         }
     }
     

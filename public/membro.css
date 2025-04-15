@@ -366,3 +366,19 @@ main {
     font-weight: 500;
     cursor: pointer;
 }
+
+.desmarcar-btn {
+    background: #e74c3c;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.2s ease;
+    margin-top: 1rem;
+}
+
+.desmarcar-btn:hover {
+    background: #c0392b;
+}
