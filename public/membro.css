@@ -98,6 +98,26 @@ main {
     background: #ffffff;
 }
 
+#orientacoes-gerais {
+    border: 2px solid #34495e;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: #ffffff;
+    margin-bottom: 1rem;
+}
+
+#orientacoes-gerais h3 {
+    font-size: 1.5rem;
+    color: #34495e;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+#orientacoes-gerais p {
+    font-size: 0.95rem;
+    color: #34495e;
+    margin-bottom: 0.5rem;
+}
 .membro-nome {
     font-size: 1.5rem;
     color: #34495e;
