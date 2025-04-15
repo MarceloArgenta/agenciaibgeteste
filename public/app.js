@@ -15,10 +15,6 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // Elementos do DOM
-const iniciadasLista = document.getElementById('iniciadas-lista');
-const finalizadasLista = document.getElementById('finalizadas-lista');
-const visualizarCamposContainer = document.getElementById('visualizar-campos-container');
-const voltarListaBtn = document.getElementById('voltar-lista-btn');
 const equipeForm = document.getElementById('equipe-form');
 const equipeIdInput = document.getElementById('equipe-id');
 const nomeEquipeInput = document.getElementById('nome-equipe');
@@ -42,7 +38,6 @@ const codigoIbgeInput = document.getElementById('codigo-ibge');
 const salvarMunicipioBtn = document.getElementById('salvar-municipio-btn');
 const cancelarMunicipioBtn = document.getElementById('cancelar-municipio-btn');
 const municipiosContainer = document.getElementById('municipios-container');
-
 const setorForm = document.getElementById('setor-form');
 const setorIdInput = document.getElementById('setor-id');
 const municipioSetorSelect = document.getElementById('municipio-setor');
@@ -64,9 +59,8 @@ const tarefasContainer = document.getElementById('tarefas-container');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 const acompanhamentoListaContainer = document.getElementById('acompanhamento-lista-container');
-const acompanhamentoListaView = document.getElementById('acompanhamento-lista');
-const visualizarCamposView = document.getElementById('visualizar-campos');
-// Verificar autenticação
+
+let iniciadasLista, finalizadasLista, visualizarCamposContainer, voltarListaBtn, acompanhamentoListaView, visualizarCamposView;
 
 
 // Botão de Logout
@@ -993,32 +987,25 @@ async function buscarSetoresPorMunicipio(municipioId) {
     return setoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-async function renderizarVisualizarCampos(log, tarefa) {
+function renderizarVisualizarCampos(log, tarefa) {
     visualizarCamposContainer.innerHTML = '';
     const visualizarCard = document.createElement('div');
     visualizarCard.className = 'visualizar-card';
     
     const visualizarTitulo = document.createElement('h3');
     visualizarTitulo.className = 'visualizar-titulo';
-    visualizarTitulo.textContent = `Campos da Tarefa: ${log.tarefaNome}`;
+    visualizarTitulo.textContent = `Campos: ${log.tarefaNome}`;
     
-    const camposForm = document.createElement('form');
-    camposForm.className = 'campos-form';
+    const camposContainer = document.createElement('div');
+    camposContainer.className = 'campos-container';
     
     const logCampos = log.campos || {};
-    console.log('Campos da tarefa:', tarefa.campos, 'Log ID:', log.id);
+    console.log('Visualizando campos para log:', log.id, 'tarefa:', tarefa.id, 'campos:', logCampos);
     
     if (!tarefa || !tarefa.campos || Object.keys(tarefa.campos).length === 0) {
         console.warn('Nenhum campo válido para tarefa:', tarefa?.id);
-        const semCampos = document.createElement('p');
-        semCampos.textContent = 'Nenhum campo para visualizar.';
-        camposForm.appendChild(semCampos);
+        camposContainer.innerHTML = '<p>Nenhum campo preenchido.</p>';
     } else {
-        const opcoes = await buscarOpcoesPreCadastradas();
-        let municipioSelect = null;
-        let setorSelect = null;
-        const isFinalizada = log.status === 'Finalizada';
-        
         const camposOrdenados = Object.entries(tarefa.campos)
             .sort((a, b) => {
                 const ordemA = a[1].ordem !== undefined ? a[1].ordem : 999;
@@ -1026,123 +1013,17 @@ async function renderizarVisualizarCampos(log, tarefa) {
                 if (ordemA === ordemB) return a[0].localeCompare(b[0]);
                 return ordemA - ordemB;
             });
-        
-        camposOrdenados.forEach(([nomeCampo, campoData]) => {
-            if (tarefa.campos.hasOwnProperty(nomeCampo)) {
-                console.log('Renderizando campo:', nomeCampo);
-                const campoContainer = document.createElement('div');
-                campoContainer.className = 'campo-container';
-                
-                const campoLabel = document.createElement('label');
-                campoLabel.className = 'campo-label';
-                campoLabel.textContent = nomeCampo;
-                
-                let campoInput;
-                if (['Responsável 1', 'Responsável 2', 'Município', 'Setor'].includes(nomeCampo)) {
-                    campoInput = document.createElement('select');
-                    campoInput.className = 'campo-select';
-                    campoInput.disabled = isFinalizada;
-                    if (nomeCampo === 'Município') {
-                        municipioSelect = campoInput;
-                    } else if (nomeCampo === 'Setor') {
-                        setorSelect = campoInput;
-                    }
-                    
-                    const opcoesLista = nomeCampo.includes('Responsável') ? opcoes.membros :
-                                        nomeCampo === 'Município' ? opcoes.municipios : [];
-                    const valorCampo = nomeCampo.includes('Responsável') ? 'nome' : 'nome';
-                    
-                    const opcaoVazia = document.createElement('option');
-                    opcaoVazia.value = '';
-                    opcaoVazia.textContent = `Selecione ${nomeCampo}`;
-                    campoInput.appendChild(opcaoVazia);
-                    
-                    opcoesLista.forEach(opcao => {
-                        const opcaoElemento = document.createElement('option');
-                        opcaoElemento.value = opcao[valorCampo];
-                        opcaoElemento.textContent = opcao[valorCampo];
-                        if (logCampos[nomeCampo] === opcao[valorCampo]) {
-                            opcaoElemento.selected = true;
-                        }
-                        campoInput.appendChild(opcaoElemento);
-                    });
-                } else {
-                    campoInput = document.createElement('input');
-                    campoInput.type = nomeCampo.includes('Data de Início da Coleta') || nomeCampo.includes('Data de finalização da coleta') ? 'date' : 'text';
-                    campoInput.className = 'campo-input';
-                    campoInput.value = logCampos[nomeCampo] || '';
-                    campoInput.disabled = isFinalizada;
-                }
-                
-                campoContainer.appendChild(campoLabel);
-                campoContainer.appendChild(campoInput);
-                camposForm.appendChild(campoContainer);
-            }
+        camposOrdenados.forEach(([nomeCampo]) => {
+            const campoDiv = document.createElement('div');
+            campoDiv.className = 'campo-view';
+            const valor = logCampos[nomeCampo] || 'Não preenchido';
+            campoDiv.innerHTML = `<span class="campo-label">${nomeCampo}:</span> <span class="campo-valor">${valor}</span>`;
+            camposContainer.appendChild(campoDiv);
         });
-        
-        if (municipioSelect && setorSelect && !isFinalizada) {
-            const updateSetorOptions = async () => {
-                const municipioNome = municipioSelect.value;
-                console.log('Município selecionado:', municipioNome);
-                const municipio = opcoes.municipios.find(m => m.nome === municipioNome);
-                const municipioId = municipio ? municipio.id : '';
-                console.log('municipioId derivado:', municipioId);
-                const setores = await buscarSetoresPorMunicipio(municipioId);
-                
-                setorSelect.innerHTML = '';
-                const opcaoVazia = document.createElement('option');
-                opcaoVazia.value = '';
-                opcaoVazia.textContent = setores.length ? 'Selecione Setor' : 'Nenhum setor disponível';
-                setorSelect.appendChild(opcaoVazia);
-                
-                setores.forEach(setor => {
-                    const opcao = document.createElement('option');
-                    opcao.value = setor.codigoSetor;
-                    opcao.textContent = setor.codigoSetor;
-                    if (logCampos['Setor'] === setor.codigoSetor) {
-                        opcao.selected = true;
-                    }
-                    setorSelect.appendChild(opcao);
-                });
-            };
-            
-            await updateSetorOptions();
-            municipioSelect.addEventListener('change', updateSetorOptions);
-        }
-        
-        if (!isFinalizada) {
-            const salvarBtn = document.createElement('button');
-            salvarBtn.type = 'button';
-            salvarBtn.className = 'salvar-campos-btn';
-            salvarBtn.textContent = 'Salvar Campos';
-            salvarBtn.addEventListener('click', async () => {
-                const novosCampos = {};
-                camposForm.querySelectorAll('.campo-container').forEach(container => {
-                    const nomeCampo = container.querySelector('.campo-label').textContent;
-                    const input = container.querySelector('.campo-input, .campo-select');
-                    novosCampos[nomeCampo] = input.value.trim();
-                });
-                const novoStatus = novosCampos['Data de finalização da coleta'] ? 'Finalizada' : 'Iniciado';
-                try {
-                    await db.collection('tarefa_logs').doc(log.id).update({
-                        campos: novosCampos,
-                        status: novoStatus
-                    });
-                    console.log('Campos salvos:', novosCampos);
-                    alert('Campos salvos com sucesso!');
-                    renderizarVisualizarCampos(log, tarefa);
-                    renderizarAcompanhamento();
-                } catch (error) {
-                    console.error('Erro ao salvar campos:', error);
-                    alert('Erro ao salvar campos.');
-                }
-            });
-            camposForm.appendChild(salvarBtn);
-        }
     }
     
     visualizarCard.appendChild(visualizarTitulo);
-    visualizarCard.appendChild(camposForm);
+    visualizarCard.appendChild(camposContainer);
     visualizarCamposContainer.appendChild(visualizarCard);
 }
 
@@ -1357,12 +1238,38 @@ cancelarSetorBtn.addEventListener('click', limparFormularioSetor);
 
 
 // Replace lines 1029-1040 with:
-// Replace lines 1029-1040 with:
-// Replace lines 1029-1040 with:
 document.addEventListener('DOMContentLoaded', () => {
     let authCheckTimeout = null;
     const adminEmails = ['marcelo.argenta.pf@gmail.com', 'cintia.tusset@ibge.gov.br']; // Add second admin email here
     const unsubscribe = auth.onAuthStateChanged((user) => {
+        iniciadasLista = document.getElementById('iniciadas-lista');
+    finalizadasLista = document.getElementById('finalizadas-lista');
+    visualizarCamposContainer = document.getElementById('visualizar-campos-container');
+    voltarListaBtn = document.getElementById('voltar-lista-btn');
+    acompanhamentoListaView = document.getElementById('acompanhamento-lista');
+    visualizarCamposView = document.getElementById('visualizar-campos');
+
+    if (!voltarListaBtn || !acompanhamentoListaView || !visualizarCamposView) {
+        console.error('Elementos DOM não encontrados:', {
+            voltarListaBtn: !!voltarListaBtn,
+            acompanhamentoListaView: !!acompanhamentoListaView,
+            visualizarCamposView: !!visualizarCamposView
+        });
+        return;
+    }
+
+    voltarListaBtn.addEventListener('click', () => {
+        console.log('Botão Voltar clicado');
+        visualizarCamposView.classList.remove('active');
+        acompanhamentoListaView.classList.add('active');
+        console.log('Classes após toggle:', {
+            visualizarCampos: visualizarCamposView.classList.value,
+            acompanhamentoLista: acompanhamentoListaView.classList.value
+        });
+        renderizarAcompanhamento();
+    });
+
+    let authCheckTimeout = null;
         // Log auth state to sessionStorage
         sessionStorage.setItem('authLog', JSON.stringify({
             timestamp: new Date().toISOString(),
