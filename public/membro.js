@@ -497,7 +497,8 @@ async function renderizarPreencherCampos(log, tarefa) {
                     });
                     console.log('Campos salvos:', novosCampos, 'Modificações registradas:', changedFields, 'Status:', novoStatus);
                     alert('Campos salvos com sucesso!');
-                    renderizarPreencherCampos(log, tarefa);
+                    document.getElementById('preencher-campos').classList.remove('active');
+                    document.getElementById('iniciar-tarefa').classList.add('active');
                     renderizarIniciadas(auth.currentUser.uid);
                 } catch (error) {
                     console.error('Erro ao salvar campos:', error);
@@ -524,7 +525,6 @@ async function renderizarPreencherCampos(log, tarefa) {
                     });
                     console.log('Tarefa revertida para Iniciado:', log.id);
                     alert('Tarefa desmarcada como finalizada com sucesso!');
-                    // Update log locally for immediate re-render
                     const updatedLog = { ...log, status: 'Iniciado' };
                     renderizarPreencherCampos(updatedLog, tarefa);
                     renderizarIniciadas(auth.currentUser.uid);
