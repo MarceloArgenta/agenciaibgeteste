@@ -248,6 +248,12 @@ main {
 .iniciadas-container {
     margin-top: 1rem;
 }
+#iniciar-tarefa h3 {
+    font-size: 1.25rem;
+    color: #34495e;
+    font-weight: 500;
+    margin: 1rem 0 0.5rem;
+}
 
 .iniciada-item {
     background: #ecf0f1;

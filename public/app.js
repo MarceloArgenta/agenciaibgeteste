@@ -15,6 +15,10 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // Elementos do DOM
+const iniciadasLista = document.getElementById('iniciadas-lista');
+const finalizadasLista = document.getElementById('finalizadas-lista');
+const visualizarCamposContainer = document.getElementById('visualizar-campos-container');
+const voltarListaBtn = document.getElementById('voltar-lista-btn');
 const equipeForm = document.getElementById('equipe-form');
 const equipeIdInput = document.getElementById('equipe-id');
 const nomeEquipeInput = document.getElementById('nome-equipe');
@@ -60,8 +64,6 @@ const tarefasContainer = document.getElementById('tarefas-container');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 const acompanhamentoListaContainer = document.getElementById('acompanhamento-lista-container');
-const visualizarCamposContainer = document.getElementById('visualizar-campos-container');
-const voltarListaBtn = document.getElementById('voltar-lista-btn');
 const acompanhamentoListaView = document.getElementById('acompanhamento-lista');
 const visualizarCamposView = document.getElementById('visualizar-campos');
 // Verificar autenticação
@@ -889,18 +891,23 @@ async function atualizarListaSetores() {
 
 // Função para renderizar tarefas iniciadas (Aba Acompanhamento)
 async function renderizarAcompanhamento() {
-    acompanhamentoListaContainer.innerHTML = '';
+    if (!iniciadasLista || !finalizadasLista) {
+        console.error('Elementos iniciadasLista ou finalizadasLista não encontrados.');
+        return;
+    }
+    iniciadasLista.innerHTML = '';
+    finalizadasLista.innerHTML = '';
     try {
         const logsSnapshot = await db.collection('tarefa_logs')
             .where('acao', '==', 'iniciar')
             .orderBy('dataInicio', 'desc')
             .get();
         if (logsSnapshot.empty) {
-            acompanhamentoListaContainer.innerHTML = '<p>Nenhuma tarefa iniciada.</p>';
+            iniciadasLista.innerHTML = '<p>Nenhuma tarefa iniciada.</p>';
+            finalizadasLista.innerHTML = '<p>Nenhuma tarefa finalizada.</p>';
             return;
         }
 
-        // Carregar membros para mapear emails a nomes
         const membrosSnapshot = await db.collection('membros').get();
         const membrosMap = {};
         membrosSnapshot.forEach(doc => {
@@ -908,8 +915,13 @@ async function renderizarAcompanhamento() {
             membrosMap[membro.uid] = membro.nome;
         });
 
-        const tarefasContainer = document.createElement('div');
-        tarefasContainer.className = 'tarefas-container';
+        const iniciadasContainer = document.createElement('div');
+        iniciadasContainer.className = 'tarefas-container';
+        const finalizadasContainer = document.createElement('div');
+        finalizadasContainer.className = 'tarefas-container';
+        let hasIniciadas = false;
+        let hasFinalizadas = false;
+
         for (const doc of logsSnapshot.docs) {
             const log = { id: doc.id, ...doc.data() };
             const tarefaDoc = await db.collection('tarefas').doc(log.tarefaId).get();
@@ -922,10 +934,13 @@ async function renderizarAcompanhamento() {
             tarefaCard.className = 'tarefa-card';
             
             const membroNome = membrosMap[log.membroId] || log.membroEmail || 'Desconhecido';
+            const dataInicio = log.dataInicio && typeof log.dataInicio.toDate === 'function'
+                ? log.dataInicio.toDate().toLocaleDateString('pt-BR')
+                : 'Data não disponível';
             tarefaCard.innerHTML = `
                 <h3 class="tarefa-nome">${log.tarefaNome}</h3>
                 <p class="tarefa-detalhes">Membro: ${membroNome}</p>
-                <p class="tarefa-detalhes">Data de Início: ${log.dataInicio ? new Date(log.dataInicio).toLocaleDateString('pt-BR') : 'N/A'}</p>
+                <p class="tarefa-detalhes">Data de Início: ${dataInicio}</p>
                 <p class="tarefa-detalhes">Status: ${log.status || 'Iniciado'}</p>
             `;
             
@@ -939,36 +954,71 @@ async function renderizarAcompanhamento() {
             });
             
             tarefaCard.appendChild(visualizarBtn);
-            tarefasContainer.appendChild(tarefaCard);
+            if (log.status === 'Finalizada') {
+                finalizadasContainer.appendChild(tarefaCard);
+                hasFinalizadas = true;
+            } else {
+                iniciadasContainer.appendChild(tarefaCard);
+                hasIniciadas = true;
+            }
         }
-        acompanhamentoListaContainer.appendChild(tarefasContainer);
+
+        iniciadasLista.appendChild(iniciadasContainer);
+        finalizadasLista.appendChild(finalizadasContainer);
+        if (!hasIniciadas) iniciadasLista.innerHTML = '<p>Nenhuma tarefa iniciada.</p>';
+        if (!hasFinalizadas) finalizadasLista.innerHTML = '<p>Nenhuma tarefa finalizada.</p>';
     } catch (error) {
-        console.error('Erro ao carregar tarefas iniciadas:', error);
-        acompanhamentoListaContainer.innerHTML = '<p>Erro ao carregar tarefas iniciadas.</p>';
+        console.error('Erro ao carregar tarefas:', error);
+        iniciadasLista.innerHTML = '<p>Erro ao carregar tarefas iniciadas.</p>';
+        finalizadasLista.innerHTML = '<p>Erro ao carregar tarefas finalizadas.</p>';
     }
 }
 
 // Função para renderizar visualização de campos (read-only)
 
-function renderizarVisualizarCampos(log, tarefa) {
+async function buscarOpcoesPreCadastradas() {
+    const municipiosSnapshot = await db.collection('municipios').get();
+    const membrosSnapshot = await db.collection('membros').get();
+    return {
+        municipios: municipiosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        membros: membrosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    };
+}
+
+async function buscarSetoresPorMunicipio(municipioId) {
+    if (!municipioId) return [];
+    const setoresSnapshot = await db.collection('setores')
+        .where('municipioId', '==', municipioId)
+        .get();
+    return setoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+async function renderizarVisualizarCampos(log, tarefa) {
     visualizarCamposContainer.innerHTML = '';
     const visualizarCard = document.createElement('div');
     visualizarCard.className = 'visualizar-card';
     
     const visualizarTitulo = document.createElement('h3');
     visualizarTitulo.className = 'visualizar-titulo';
-    visualizarTitulo.textContent = `Campos: ${log.tarefaNome}`;
+    visualizarTitulo.textContent = `Campos da Tarefa: ${log.tarefaNome}`;
     
-    const camposContainer = document.createElement('div');
-    camposContainer.className = 'campos-container';
+    const camposForm = document.createElement('form');
+    camposForm.className = 'campos-form';
     
     const logCampos = log.campos || {};
-    console.log('Visualizando campos para log:', log.id, 'tarefa:', tarefa.id, 'campos:', logCampos);
+    console.log('Campos da tarefa:', tarefa.campos, 'Log ID:', log.id);
     
     if (!tarefa || !tarefa.campos || Object.keys(tarefa.campos).length === 0) {
         console.warn('Nenhum campo válido para tarefa:', tarefa?.id);
-        camposContainer.innerHTML = '<p>Nenhum campo preenchido.</p>';
+        const semCampos = document.createElement('p');
+        semCampos.textContent = 'Nenhum campo para visualizar.';
+        camposForm.appendChild(semCampos);
     } else {
+        const opcoes = await buscarOpcoesPreCadastradas();
+        let municipioSelect = null;
+        let setorSelect = null;
+        const isFinalizada = log.status === 'Finalizada';
+        
         const camposOrdenados = Object.entries(tarefa.campos)
             .sort((a, b) => {
                 const ordemA = a[1].ordem !== undefined ? a[1].ordem : 999;
@@ -976,25 +1026,125 @@ function renderizarVisualizarCampos(log, tarefa) {
                 if (ordemA === ordemB) return a[0].localeCompare(b[0]);
                 return ordemA - ordemB;
             });
-        camposOrdenados.forEach(([nomeCampo]) => {
-            const campoDiv = document.createElement('div');
-            campoDiv.className = 'campo-view';
-            const valor = logCampos[nomeCampo] || 'Não preenchido';
-            campoDiv.innerHTML = `<span class="campo-label">${nomeCampo}:</span> <span class="campo-valor">${valor}</span>`;
-            camposContainer.appendChild(campoDiv);
+        
+        camposOrdenados.forEach(([nomeCampo, campoData]) => {
+            if (tarefa.campos.hasOwnProperty(nomeCampo)) {
+                console.log('Renderizando campo:', nomeCampo);
+                const campoContainer = document.createElement('div');
+                campoContainer.className = 'campo-container';
+                
+                const campoLabel = document.createElement('label');
+                campoLabel.className = 'campo-label';
+                campoLabel.textContent = nomeCampo;
+                
+                let campoInput;
+                if (['Responsável 1', 'Responsável 2', 'Município', 'Setor'].includes(nomeCampo)) {
+                    campoInput = document.createElement('select');
+                    campoInput.className = 'campo-select';
+                    campoInput.disabled = isFinalizada;
+                    if (nomeCampo === 'Município') {
+                        municipioSelect = campoInput;
+                    } else if (nomeCampo === 'Setor') {
+                        setorSelect = campoInput;
+                    }
+                    
+                    const opcoesLista = nomeCampo.includes('Responsável') ? opcoes.membros :
+                                        nomeCampo === 'Município' ? opcoes.municipios : [];
+                    const valorCampo = nomeCampo.includes('Responsável') ? 'nome' : 'nome';
+                    
+                    const opcaoVazia = document.createElement('option');
+                    opcaoVazia.value = '';
+                    opcaoVazia.textContent = `Selecione ${nomeCampo}`;
+                    campoInput.appendChild(opcaoVazia);
+                    
+                    opcoesLista.forEach(opcao => {
+                        const opcaoElemento = document.createElement('option');
+                        opcaoElemento.value = opcao[valorCampo];
+                        opcaoElemento.textContent = opcao[valorCampo];
+                        if (logCampos[nomeCampo] === opcao[valorCampo]) {
+                            opcaoElemento.selected = true;
+                        }
+                        campoInput.appendChild(opcaoElemento);
+                    });
+                } else {
+                    campoInput = document.createElement('input');
+                    campoInput.type = nomeCampo.includes('Data de Início da Coleta') || nomeCampo.includes('Data de finalização da coleta') ? 'date' : 'text';
+                    campoInput.className = 'campo-input';
+                    campoInput.value = logCampos[nomeCampo] || '';
+                    campoInput.disabled = isFinalizada;
+                }
+                
+                campoContainer.appendChild(campoLabel);
+                campoContainer.appendChild(campoInput);
+                camposForm.appendChild(campoContainer);
+            }
         });
+        
+        if (municipioSelect && setorSelect && !isFinalizada) {
+            const updateSetorOptions = async () => {
+                const municipioNome = municipioSelect.value;
+                console.log('Município selecionado:', municipioNome);
+                const municipio = opcoes.municipios.find(m => m.nome === municipioNome);
+                const municipioId = municipio ? municipio.id : '';
+                console.log('municipioId derivado:', municipioId);
+                const setores = await buscarSetoresPorMunicipio(municipioId);
+                
+                setorSelect.innerHTML = '';
+                const opcaoVazia = document.createElement('option');
+                opcaoVazia.value = '';
+                opcaoVazia.textContent = setores.length ? 'Selecione Setor' : 'Nenhum setor disponível';
+                setorSelect.appendChild(opcaoVazia);
+                
+                setores.forEach(setor => {
+                    const opcao = document.createElement('option');
+                    opcao.value = setor.codigoSetor;
+                    opcao.textContent = setor.codigoSetor;
+                    if (logCampos['Setor'] === setor.codigoSetor) {
+                        opcao.selected = true;
+                    }
+                    setorSelect.appendChild(opcao);
+                });
+            };
+            
+            await updateSetorOptions();
+            municipioSelect.addEventListener('change', updateSetorOptions);
+        }
+        
+        if (!isFinalizada) {
+            const salvarBtn = document.createElement('button');
+            salvarBtn.type = 'button';
+            salvarBtn.className = 'salvar-campos-btn';
+            salvarBtn.textContent = 'Salvar Campos';
+            salvarBtn.addEventListener('click', async () => {
+                const novosCampos = {};
+                camposForm.querySelectorAll('.campo-container').forEach(container => {
+                    const nomeCampo = container.querySelector('.campo-label').textContent;
+                    const input = container.querySelector('.campo-input, .campo-select');
+                    novosCampos[nomeCampo] = input.value.trim();
+                });
+                const novoStatus = novosCampos['Data de finalização da coleta'] ? 'Finalizada' : 'Iniciado';
+                try {
+                    await db.collection('tarefa_logs').doc(log.id).update({
+                        campos: novosCampos,
+                        status: novoStatus
+                    });
+                    console.log('Campos salvos:', novosCampos);
+                    alert('Campos salvos com sucesso!');
+                    renderizarVisualizarCampos(log, tarefa);
+                    renderizarAcompanhamento();
+                } catch (error) {
+                    console.error('Erro ao salvar campos:', error);
+                    alert('Erro ao salvar campos.');
+                }
+            });
+            camposForm.appendChild(salvarBtn);
+        }
     }
     
     visualizarCard.appendChild(visualizarTitulo);
-    visualizarCard.appendChild(camposContainer);
+    visualizarCard.appendChild(camposForm);
     visualizarCamposContainer.appendChild(visualizarCard);
 }
-// Evento para voltar à lista de acompanhamento
-voltarListaBtn.addEventListener('click', () => {
-    visualizarCamposView.classList.remove('active');
-    acompanhamentoListaView.classList.add('active');
-    renderizarAcompanhamento();
-});
 
 // Estilos adicionais para os cards (injetados via JS para evitar alterar CSS manualmente)
 const estilosCards = `

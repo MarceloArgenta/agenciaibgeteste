@@ -15,6 +15,7 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 // Elementos do DOM
+const finalizadasLista = document.getElementById('finalizadas-lista');
 const membroContainer = document.getElementById('membro-container');
 const pesquisaBaloesContainer = document.getElementById('pesquisa-baloes-container');
 const pesquisaDetalhesContainer = document.getElementById('pesquisa-detalhes-container');
@@ -164,6 +165,7 @@ async function renderizarPesquisaBaloes(tarefaIds) {
 }
 
 // Função para renderizar detalhes da pesquisa selecionada
+
 function renderizarPesquisaDetalhes(tarefa) {
     pesquisaDetalhesContainer.innerHTML = '';
     const pesquisaCard = document.createElement('div');
@@ -172,20 +174,6 @@ function renderizarPesquisaDetalhes(tarefa) {
     const pesquisaNome = document.createElement('h3');
     pesquisaNome.className = 'pesquisa-nome';
     pesquisaNome.textContent = tarefa.nome;
-    
-    const pesquisaCampos = document.createElement('div');
-    pesquisaCampos.className = 'pesquisa-campos';
-    if (tarefa.campos && Object.keys(tarefa.campos).length > 0) {
-        pesquisaCampos.innerHTML = '<h4>Campos:</h4>';
-        Object.entries(tarefa.campos).forEach(([nomeCampo, valorCampo]) => {
-            const campoSpan = document.createElement('span');
-            campoSpan.className = 'pesquisa-campo';
-            campoSpan.textContent = `${nomeCampo}: ${valorCampo || 'Não preenchido'}`;
-            pesquisaCampos.appendChild(campoSpan);
-        });
-    } else {
-        pesquisaCampos.innerHTML = '<p>Sem campos associados.</p>';
-    }
     
     const iniciarBtn = document.createElement('button');
     iniciarBtn.className = 'iniciar-btn';
@@ -197,11 +185,9 @@ function renderizarPesquisaDetalhes(tarefa) {
     });
     
     pesquisaCard.appendChild(pesquisaNome);
-    pesquisaCard.appendChild(pesquisaCampos);
     pesquisaCard.appendChild(iniciarBtn);
     pesquisaDetalhesContainer.appendChild(pesquisaCard);
 }
-
 // Função para renderizar a interface de iniciar tarefa
 async function renderizarIniciarTarefa(tarefa) {
     iniciarTarefaContainer.innerHTML = '';
@@ -250,6 +236,7 @@ async function renderizarIniciarTarefa(tarefa) {
 async function renderizarIniciadas(membroId) {
     if (!membroId) return;
     iniciadasLista.innerHTML = '';
+    finalizadasLista.innerHTML = '';
     try {
         const logsSnapshot = await db.collection('tarefa_logs')
             .where('membroId', '==', membroId)
@@ -258,10 +245,15 @@ async function renderizarIniciadas(membroId) {
             .get();
         if (logsSnapshot.empty) {
             iniciadasLista.innerHTML = '<p>Nenhuma tarefa iniciada.</p>';
+            finalizadasLista.innerHTML = '<p>Nenhuma tarefa finalizada.</p>';
             return;
         }
         const iniciadasContainer = document.createElement('div');
         iniciadasContainer.className = 'iniciadas-container';
+        const finalizadasContainer = document.createElement('div');
+        finalizadasContainer.className = 'iniciadas-container';
+        let hasIniciadas = false;
+        let hasFinalizadas = false;
         for (const doc of logsSnapshot.docs) {
             const log = { id: doc.id, ...doc.data() };
             const tarefaDoc = await db.collection('tarefas').doc(log.tarefaId).get();
@@ -270,21 +262,31 @@ async function renderizarIniciadas(membroId) {
                 continue;
             }
             const tarefa = { id: tarefaDoc.id, ...tarefaDoc.data() };
-            const iniciadaItem = document.createElement('div');
-            iniciadaItem.className = 'iniciada-item';
-            iniciadaItem.textContent = `${log.tarefaNome} - Iniciada em: ${log.dataInicio ? log.dataInicio.toDate().toLocaleDateString('pt-BR') : 'Data não disponível'} - Status: ${log.status || 'Iniciado'}`;
-            iniciadaItem.addEventListener('click', () => {
+            const item = document.createElement('div');
+            item.className = 'iniciada-item';
+            item.textContent = `${log.tarefaNome} - Iniciada em: ${log.dataInicio ? log.dataInicio.toDate().toLocaleDateString('pt-BR') : 'Data não disponível'} - Status: ${log.status || 'Iniciado'}`;
+            item.addEventListener('click', () => {
                 console.log('Abrindo campos para log:', log.id, 'tarefa:', tarefa.id);
                 renderizarPreencherCampos(log, tarefa);
                 iniciarTarefaView.classList.remove('active');
                 preencherCamposView.classList.add('active');
             });
-            iniciadasContainer.appendChild(iniciadaItem);
+            if (log.status === 'Finalizada') {
+                finalizadasContainer.appendChild(item);
+                hasFinalizadas = true;
+            } else {
+                iniciadasContainer.appendChild(item);
+                hasIniciadas = true;
+            }
         }
         iniciadasLista.appendChild(iniciadasContainer);
+        finalizadasLista.appendChild(finalizadasContainer);
+        if (!hasIniciadas) iniciadasLista.innerHTML = '<p>Nenhuma tarefa iniciada.</p>';
+        if (!hasFinalizadas) finalizadasLista.innerHTML = '<p>Nenhuma tarefa finalizada.</p>';
     } catch (error) {
-        console.error('Erro ao carregar tarefas iniciadas:', error);
+        console.error('Erro ao carregar tarefas:', error);
         iniciadasLista.innerHTML = '<p>Erro ao carregar tarefas iniciadas.</p>';
+        finalizadasLista.innerHTML = '<p>Erro ao carregar tarefas finalizadas.</p>';
     }
 }
 
@@ -350,8 +352,8 @@ async function renderizarPreencherCampos(log, tarefa) {
         const opcoes = await buscarOpcoesPreCadastradas();
         let municipioSelect = null;
         let setorSelect = null;
+        const isFinalizada = log.status === 'Finalizada';
         
-        // Ordenar campos por ordem e nome
         const camposOrdenados = Object.entries(tarefa.campos)
             .sort((a, b) => {
                 const ordemA = a[1].ordem !== undefined ? a[1].ordem : 999;
@@ -374,6 +376,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                 if (['Responsável 1', 'Responsável 2', 'Município', 'Setor'].includes(nomeCampo)) {
                     campoInput = document.createElement('select');
                     campoInput.className = 'campo-select';
+                    campoInput.disabled = isFinalizada;
                     if (nomeCampo === 'Município') {
                         municipioSelect = campoInput;
                     } else if (nomeCampo === 'Setor') {
@@ -403,6 +406,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                     campoInput.type = nomeCampo.includes('Data de Início da Coleta') || nomeCampo.includes('Data de finalização da coleta') ? 'date' : 'text';
                     campoInput.className = 'campo-input';
                     campoInput.value = logCampos[nomeCampo] || '';
+                    campoInput.disabled = isFinalizada;
                 }
                 
                 campoContainer.appendChild(campoLabel);
@@ -411,7 +415,6 @@ async function renderizarPreencherCampos(log, tarefa) {
             }
         });
         
-        // Configurar setores iniciais e listener para Município
         if (municipioSelect && setorSelect) {
             const updateSetorOptions = async () => {
                 const municipioNome = municipioSelect.value;
@@ -438,41 +441,41 @@ async function renderizarPreencherCampos(log, tarefa) {
                 });
             };
             
-            // Carregar setores iniciais
             await updateSetorOptions();
-            
-            // Listener para mudanças em Município
-            municipioSelect.addEventListener('change', updateSetorOptions);
+            if (!isFinalizada) {
+                municipioSelect.addEventListener('change', updateSetorOptions);
+            }
         }
         
-        const salvarBtn = document.createElement('button');
-        salvarBtn.type = 'button';
-        salvarBtn.className = 'salvar-campos-btn';
-        salvarBtn.textContent = 'Salvar Campos';
-        salvarBtn.addEventListener('click', async () => {
-            const novosCampos = {};
-            camposForm.querySelectorAll('.campo-container').forEach(container => {
-                const nomeCampo = container.querySelector('.campo-label').textContent;
-                const input = container.querySelector('.campo-input, .campo-select');
-                novosCampos[nomeCampo] = input.value.trim();
-            });
-            const novoStatus = novosCampos['Data de finalização da coleta'] ? 'Finalizada' : 'Iniciado';
-            try {
-                await db.collection('tarefa_logs').doc(log.id).update({
-                    campos: novosCampos,
-                    status: novoStatus
+        if (!isFinalizada) {
+            const salvarBtn = document.createElement('button');
+            salvarBtn.type = 'button';
+            salvarBtn.className = 'salvar-campos-btn';
+            salvarBtn.textContent = 'Salvar Campos';
+            salvarBtn.addEventListener('click', async () => {
+                const novosCampos = {};
+                camposForm.querySelectorAll('.campo-container').forEach(container => {
+                    const nomeCampo = container.querySelector('.campo-label').textContent;
+                    const input = container.querySelector('.campo-input, .campo-select');
+                    novosCampos[nomeCampo] = input.value.trim();
                 });
-                console.log('Campos salvos:', novosCampos);
-                alert('Campos salvos com sucesso!');
-                renderizarPreencherCampos(log, tarefa);
-                renderizarIniciadas(auth.currentUser.uid);
-            } catch (error) {
-                console.error('Erro ao salvar campos:', error);
-                alert('Erro ao salvar campos.');
-            }
-        });
-        
-        camposForm.appendChild(salvarBtn);
+                const novoStatus = novosCampos['Data de finalização da coleta'] ? 'Finalizada' : 'Iniciado';
+                try {
+                    await db.collection('tarefa_logs').doc(log.id).update({
+                        campos: novosCampos,
+                        status: novoStatus
+                    });
+                    console.log('Campos salvos:', novosCampos);
+                    alert('Campos salvos com sucesso!');
+                    renderizarPreencherCampos(log, tarefa);
+                    renderizarIniciadas(auth.currentUser.uid);
+                } catch (error) {
+                    console.error('Erro ao salvar campos:', error);
+                    alert('Erro ao salvar campos.');
+                }
+            });
+            camposForm.appendChild(salvarBtn);
+        }
     }
     
     preencherCard.appendChild(preencherTitulo);
