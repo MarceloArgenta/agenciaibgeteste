@@ -461,11 +461,29 @@ async function renderizarPreencherCampos(log, tarefa) {
                 });
                 const novoStatus = novosCampos['Data de finalização da coleta'] ? 'Finalizada' : 'Iniciado';
                 try {
+                    // Comparar campos antigos e novos
+                    const camposAntigos = logCampos || {};
+                    const changedFields = {};
+                    Object.entries(novosCampos).forEach(([key, value]) => {
+                        if (camposAntigos[key] !== value) {
+                            changedFields[key] = value;
+                        }
+                    });
+                    if (Object.keys(changedFields).length > 0 || log.status !== novoStatus) {
+                        await db.collection('tarefa_log_modifications').add({
+                            logId: log.id,
+                            tarefaId: log.tarefaId,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            changedFields,
+                            status: novoStatus
+                        });
+                    }
+                    // Atualizar tarefa_logs
                     await db.collection('tarefa_logs').doc(log.id).update({
                         campos: novosCampos,
                         status: novoStatus
                     });
-                    console.log('Campos salvos:', novosCampos);
+                    console.log('Campos salvos:', novosCampos, 'Modificações registradas:', changedFields);
                     alert('Campos salvos com sucesso!');
                     renderizarPreencherCampos(log, tarefa);
                     renderizarIniciadas(auth.currentUser.uid);

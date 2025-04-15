@@ -541,3 +541,23 @@ input:invalid {
     border-color: #2c3e50;
     background: #ecf0f1;
 }
+
+.historico-titulo {
+    font-size: 1.25rem;
+    color: #34495e;
+    font-weight: 500;
+    margin: 1.5rem 0 0.5rem;
+}
+
+.historico-container {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.historico-item {
+    font-size: 0.95rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}

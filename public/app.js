@@ -931,11 +931,38 @@ async function renderizarAcompanhamento() {
             const dataInicio = log.dataInicio && typeof log.dataInicio.toDate === 'function'
                 ? log.dataInicio.toDate().toLocaleDateString('pt-BR')
                 : 'Data não disponível';
+            
+            // Buscar última modificação
+            let ultimaAtualizacao = 'Nenhuma modificação registrada';
+            try {
+                const modSnapshot = await db.collection('tarefa_log_modifications')
+                    .where('logId', '==', log.id)
+                    .orderBy('timestamp', 'desc')
+                    .limit(1)
+                    .get();
+                if (!modSnapshot.empty) {
+                    const mod = modSnapshot.docs[0].data();
+                    const timestamp = mod.timestamp && typeof mod.timestamp.toDate === 'function'
+                        ? mod.timestamp.toDate().toLocaleString('pt-BR')
+                        : 'Data não disponível';
+                    let camposText = '';
+                    if (mod.changedFields && Object.keys(mod.changedFields).length > 0) {
+                        camposText = Object.entries(mod.changedFields)
+                            .map(([key, value]) => `${key}: "${value}"`)
+                            .join(', ');
+                    }
+                    ultimaAtualizacao = `${timestamp} - ${camposText}${camposText ? ', ' : ''}Status: ${mod.status}`;
+                }
+            } catch (error) {
+                console.error('Erro ao buscar última modificação:', error);
+            }
+
             tarefaCard.innerHTML = `
                 <h3 class="tarefa-nome">${log.tarefaNome}</h3>
                 <p class="tarefa-detalhes">Membro: ${membroNome}</p>
                 <p class="tarefa-detalhes">Data de Início: ${dataInicio}</p>
                 <p class="tarefa-detalhes">Status: ${log.status || 'Iniciado'}</p>
+                <p class="tarefa-detalhes">Última atualização: ${ultimaAtualizacao}</p>
             `;
             
             const visualizarBtn = document.createElement('button');
@@ -987,7 +1014,7 @@ async function buscarSetoresPorMunicipio(municipioId) {
     return setoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-function renderizarVisualizarCampos(log, tarefa) {
+async function renderizarVisualizarCampos(log, tarefa) {
     visualizarCamposContainer.innerHTML = '';
     const visualizarCard = document.createElement('div');
     visualizarCard.className = 'visualizar-card';
@@ -1022,8 +1049,48 @@ function renderizarVisualizarCampos(log, tarefa) {
         });
     }
     
+    // Histórico de Modificações
+    const historicoTitulo = document.createElement('h3');
+    historicoTitulo.className = 'historico-titulo';
+    historicoTitulo.textContent = 'Histórico de Modificações';
+    
+    const historicoContainer = document.createElement('div');
+    historicoContainer.className = 'historico-container';
+    
+    try {
+        const modificacoesSnapshot = await db.collection('tarefa_log_modifications')
+            .where('logId', '==', log.id)
+            .orderBy('timestamp', 'asc')
+            .get();
+        if (modificacoesSnapshot.empty) {
+            historicoContainer.innerHTML = '<p>Nenhuma modificação registrada.</p>';
+        } else {
+            modificacoesSnapshot.forEach(doc => {
+                const mod = doc.data();
+                const modItem = document.createElement('div');
+                modItem.className = 'historico-item';
+                const timestamp = mod.timestamp && typeof mod.timestamp.toDate === 'function'
+                    ? mod.timestamp.toDate().toLocaleString('pt-BR')
+                    : 'Data não disponível';
+                let camposText = '';
+                if (mod.changedFields && Object.keys(mod.changedFields).length > 0) {
+                    camposText = Object.entries(mod.changedFields)
+                        .map(([key, value]) => `${key}: "${value}"`)
+                        .join(', ');
+                }
+                modItem.textContent = `${timestamp} - ${camposText}${camposText ? ', ' : ''}Status: ${mod.status}`;
+                historicoContainer.appendChild(modItem);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+        historicoContainer.innerHTML = '<p>Erro ao carregar histórico.</p>';
+    }
+    
     visualizarCard.appendChild(visualizarTitulo);
     visualizarCard.appendChild(camposContainer);
+    visualizarCard.appendChild(historicoTitulo);
+    visualizarCard.appendChild(historicoContainer);
     visualizarCamposContainer.appendChild(visualizarCard);
 }
 
