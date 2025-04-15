@@ -448,6 +448,20 @@ async function renderizarPreencherCampos(log, tarefa) {
         }
         
         if (!isFinalizada) {
+            const finalizarContainer = document.createElement('div');
+            finalizarContainer.className = 'finalizar-container';
+            const finalizarCheckbox = document.createElement('input');
+            finalizarCheckbox.type = 'checkbox';
+            finalizarCheckbox.id = 'finalizar-tarefa';
+            finalizarCheckbox.className = 'finalizar-checkbox';
+            const finalizarLabel = document.createElement('label');
+            finalizarLabel.htmlFor = 'finalizar-tarefa';
+            finalizarLabel.textContent = 'Marcar como Finalizada';
+            finalizarLabel.className = 'finalizar-label';
+            finalizarContainer.appendChild(finalizarCheckbox);
+            finalizarContainer.appendChild(finalizarLabel);
+            camposForm.appendChild(finalizarContainer);
+        
             const salvarBtn = document.createElement('button');
             salvarBtn.type = 'button';
             salvarBtn.className = 'salvar-campos-btn';
@@ -459,7 +473,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                     const input = container.querySelector('.campo-input, .campo-select');
                     novosCampos[nomeCampo] = input.value.trim();
                 });
-                const novoStatus = novosCampos['Data de finalização da coleta'] ? 'Finalizada' : 'Iniciado';
+                const novoStatus = finalizarCheckbox.checked ? 'Finalizada' : 'Iniciado';
                 try {
                     // Comparar campos antigos e novos
                     const camposAntigos = logCampos || {};
@@ -483,7 +497,7 @@ async function renderizarPreencherCampos(log, tarefa) {
                         campos: novosCampos,
                         status: novoStatus
                     });
-                    console.log('Campos salvos:', novosCampos, 'Modificações registradas:', changedFields);
+                    console.log('Campos salvos:', novosCampos, 'Modificações registradas:', changedFields, 'Status:', novoStatus);
                     alert('Campos salvos com sucesso!');
                     renderizarPreencherCampos(log, tarefa);
                     renderizarIniciadas(auth.currentUser.uid);
