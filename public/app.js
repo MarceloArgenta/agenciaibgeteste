@@ -1,18 +1,8 @@
-// Configuração do Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyCTCr2JUHO2Yc1JuTcwkkd682At0lb00Zw",
-    authDomain: "agenciaibgeosorioteste.firebaseapp.com",
-    projectId: "agenciaibgeosorioteste",
-    storageBucket: "agenciaibgeosorioteste.firebasestorage.app",
-    messagingSenderId: "976519041511",
-    appId: "1:976519041511:web:32014eac776c4cab3ced42",
-    measurementId: "G-S6196T35Y2"
-};
+// Importar o módulo de autenticação
+import { initializeFirebase } from './auth.js';
 
 // Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+const { db, auth } = initializeFirebase();
 
 // Elementos do DOM
 const equipeForm = document.getElementById('equipe-form');
@@ -62,7 +52,6 @@ const acompanhamentoListaContainer = document.getElementById('acompanhamento-lis
 
 let iniciadasLista, finalizadasLista, visualizarCamposContainer, voltarListaBtn, acompanhamentoListaView, visualizarCamposView;
 
-
 // Botão de Logout
 document.getElementById('logout-btn').addEventListener('click', () => {
     auth.signOut().then(() => {
@@ -86,9 +75,6 @@ function checkAutoLogout() {
     }
 }
 setInterval(checkAutoLogout, 60000);
-
-
-
 
 // Funções de gerenciamento de abas
 tabButtons.forEach(button => {
@@ -116,6 +102,20 @@ tabButtons.forEach(button => {
         }
     });
 });
+
+// Adicionar spinner de carregamento para ações assíncronas
+function showLoadingSpinner() {
+    const spinner = document.createElement('div');
+    spinner.className = 'loading-spinner';
+    document.body.appendChild(spinner);
+    return spinner;
+}
+
+function hideLoadingSpinner(spinner) {
+    if (spinner) {
+        spinner.remove();
+    }
+}
 
 // Funções para Equipes
 async function adicionarEquipe(nome, descricao) {
@@ -234,6 +234,7 @@ async function renderizarEquipes(equipes) {
 }
 
 async function atualizarListaEquipes() {
+    const spinner = showLoadingSpinner();
     try {
         equipesContainer.innerHTML = ''; // Limpa o contêiner antes de renderizar
         const equipes = await listarEquipes();
@@ -241,6 +242,8 @@ async function atualizarListaEquipes() {
     } catch (error) {
         console.error('Erro ao atualizar lista de equipes:', error);
         alert('Erro ao carregar as equipes.');
+    } finally {
+        hideLoadingSpinner(spinner);
     }
 }
 
@@ -388,11 +391,50 @@ async function renderizarMembros(membros) {
     });
 }
 
+// Função para adicionar paginação
+function renderPagination(container, totalItems, itemsPerPage, currentPage, onPageChange) {
+    if (!container) {
+        console.error('Elemento paginationContainer não encontrado no DOM.');
+        return;
+    }
+    container.innerHTML = '';
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.className = i === currentPage ? 'active' : '';
+        button.addEventListener('click', () => onPageChange(i));
+        container.appendChild(button);
+    }
+}
+
+// Exemplo de uso para lista de membros
+async function renderPaginatedMembros(page = 1, itemsPerPage = 10) {
+    const spinner = showLoadingSpinner();
+    try {
+        const membros = await listarMembros();
+        const startIndex = (page - 1) * itemsPerPage;
+        const paginatedMembros = membros.slice(startIndex, startIndex + itemsPerPage);
+        renderizarMembros(paginatedMembros);
+        let paginationContainer = document.getElementById('pagination-container');
+        if (!paginationContainer) {
+            console.warn('Criando elemento pagination-container dinamicamente.');
+            paginationContainer = document.createElement('div');
+            paginationContainer.id = 'pagination-container';
+            membrosContainer.parentNode.appendChild(paginationContainer);
+        }
+        renderPagination(paginationContainer, membros.length, itemsPerPage, page, renderPaginatedMembros);
+    } catch (error) {
+        console.error('Erro ao carregar membros paginados:', error);
+    } finally {
+        hideLoadingSpinner(spinner);
+    }
+}
+
 async function atualizarListaMembros() {
     try {
         membrosContainer.innerHTML = ''; // Limpa o contêiner antes de renderizar
-        const membros = await listarMembros();
-        renderizarMembros(membros);
+        renderPaginatedMembros();
     } catch (error) {
         console.error('Erro ao atualizar lista de membros:', error);
         alert('Erro ao carregar os membros.');
@@ -1231,10 +1273,7 @@ tarefaForm.addEventListener('submit', async (e) => {
     }
 });
 
-
-
 cancelarTarefaBtn.addEventListener('click', limparFormularioTarefa);
-
 
 municipioForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1302,7 +1341,6 @@ setorForm.addEventListener('submit', async (e) => {
 });
 
 cancelarSetorBtn.addEventListener('click', limparFormularioSetor);
-
 
 // Replace lines 1029-1040 with:
 document.addEventListener('DOMContentLoaded', () => {

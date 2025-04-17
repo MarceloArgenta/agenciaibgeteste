@@ -33,7 +33,7 @@
         </section>
     </main>
     <script>
-        // Firebase config
+        // Configuração do Firebase com valores diretos (substitua por variáveis de ambiente em produção)
         const firebaseConfig = {
             apiKey: "AIzaSyCTCr2JUHO2Yc1JuTcwkkd682At0lb00Zw",
             authDomain: "agenciaibgeosorioteste.firebaseapp.com",
@@ -43,9 +43,8 @@
             appId: "1:976519041511:web:32014eac776c4cab3ced42",
             measurementId: "G-S6196T35Y2"
         };
-    
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
+    
         const auth = firebase.auth();
     
         // Login form submission

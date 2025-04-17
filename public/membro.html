@@ -14,7 +14,10 @@
     <header>
         <img src="logo.jpg" alt="Logo do IBGE">
         <h1>Minha Área - Equipe de Trabalho IBGE</h1>
-        <button id="logout-btn">Sair</button>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="membro-nome" style="font-size: 1rem; color: #ffffff; font-weight: bold;"></span>
+            <button id="logout-btn">Sair</button>
+        </div>
     </header>
     <main>
         <div class="tabs">
@@ -55,6 +58,6 @@
             </div>
         </section>
     </main>
-    <script src="membro.js"></script>
+    <script src="membro.js" type="module" defer></script>
 </body>
 </html>

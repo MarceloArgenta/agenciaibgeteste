@@ -282,6 +282,39 @@ button:hover {
     background-color: #c82333;
 }
 
+/* Melhorias de acessibilidade */
+button:focus, input:focus, select:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+/* Estilo para paginação */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+    gap: 0.5rem;
+}
+
+.pagination button {
+    background: #ecf0f1;
+    border: 1px solid #dfe6e9;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.pagination button:hover {
+    background: #dfe6e9;
+}
+
+.pagination button.active {
+    background: #3498db;
+    color: #ffffff;
+    border-color: #3498db;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     main {
@@ -325,6 +358,23 @@ button:hover {
 
     .membro-inputs button, .campo-inputs button {
         width: 100%;
+    }
+
+    header h1 {
+        font-size: 1.25rem;
+    }
+
+    .tab-btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .form-group label {
+        font-size: 0.875rem;
+    }
+
+    .form-group input, .form-group textarea {
+        font-size: 0.875rem;
     }
 }
 
@@ -560,4 +610,20 @@ input:invalid {
     font-size: 0.95rem;
     color: #2c3e50;
     margin-bottom: 0.5rem;
+}
+
+/* Feedback visual para ações do usuário */
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

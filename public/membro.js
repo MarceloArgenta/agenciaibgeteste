@@ -33,7 +33,25 @@ const logoutBtn = document.getElementById('logout-btn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 
+// Atualizar o nome do membro logado no cabeçalho
+async function atualizarNomeMembro() {
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            try {
+                const membroDoc = await db.collection("membros").where("uid", "==", user.uid).get();
+                if (!membroDoc.empty) {
+                    const membro = membroDoc.docs[0].data();
+                    document.getElementById('membro-nome').textContent = membro.nome || 'Usuário';
+                }
+            } catch (error) {
+                console.error('Erro ao buscar nome do membro:', error);
+            }
+        }
+    });
+}
 
+// Chamar a função para atualizar o nome do membro
+atualizarNomeMembro();
 
 // Função para gerenciar abas
 tabButtons.forEach(button => {
